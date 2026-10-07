@@ -852,16 +852,16 @@ func (sm *StorageManager) AddVolumeOptions(opts *ManifestOptions, vols []MountIn
 	for _, v := range vols {
 		mountSpecs = append(mountSpecs, buildVolumeMountSpec(v))
 		if !seenVolumes[v.Name] {
-			seenVolumes[v.Type] = true
+			seenVolumes[v.Name] = true
 			volSpecs = append(volSpecs, buildVolumeSpec(v))
 		}
-		if v.Type == "gcsfuse" && v.NeedsGCSFuseSidecar {
+		if v.Type == "gcsfuse" || v.NeedsGCSFuseSidecar {
 			gcsFuseEnabled = true
 		}
 	}
 
 	if opts.GKEMTCEnabled {
-		ramdiskDir := opts.GKEMTCRamdiskDirectory + "/"
+		ramdiskDir := opts.GKEMTCRamdiskDirectory
 		mountSpecs = append(mountSpecs,
 			map[string]interface{}{"name": "cache", "mountPath": ramdiskDir},
 		)
@@ -882,10 +882,10 @@ func (sm *StorageManager) AddVolumeOptions(opts *ManifestOptions, vols []MountIn
 	opts.GCSFuseEnabled = gcsFuseEnabled
 
 	if b, err := yaml.Marshal(mountSpecs); err == nil {
-		opts.VolumesYAML = indentYaml(string(b), 16)
+		opts.VolumeMountsYAML = indentYaml(string(b), 16)
 	}
 	if b, err := yaml.Marshal(volSpecs); err == nil {
-		opts.VolumeMountsYAML = indentYaml(string(b), 14)
+		opts.VolumesYAML = indentYaml(string(b), 14)
 	}
 }
 
